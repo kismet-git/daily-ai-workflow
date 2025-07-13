@@ -8,9 +8,9 @@ import { Footer } from "@/components/footer"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <>
       <Header />
-      <main>
+      <main role="main">
         <HeroSection />
         <FeaturedWorkflow />
         <WorkflowBreakdown />
@@ -18,6 +18,6 @@ export default function HomePage() {
         <TrendsSection />
       </main>
       <Footer />
-    </div>
+    </>
   )
 }

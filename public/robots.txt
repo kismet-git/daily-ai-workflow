@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Block access to admin areas (if any in future)
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Allow specific important pages
+Allow: /workflows
+Allow: /trends
+Allow: /pricing
+
+Sitemap: https://www.dailyaiworkflow.com/sitemap.xml
