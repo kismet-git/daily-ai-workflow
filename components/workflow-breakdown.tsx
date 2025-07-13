@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Lightbulb, TrendingUp, Target, CheckCircle } from "lucide-react"
+import Link from "next/link"
 
 export function WorkflowBreakdown() {
   const sections = [
@@ -34,7 +35,7 @@ export function WorkflowBreakdown() {
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Workflow Breakdown</h2>
+          <h2 className="section-heading text-center">Workflow Breakdown Preview</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Everything you need to understand and implement this AI marketing workflow
           </p>
@@ -57,9 +58,11 @@ export function WorkflowBreakdown() {
         </div>
 
         <div className="text-center">
-          <Button size="lg" variant="outline">
-            Read Full Breakdown
-          </Button>
+          <Link href="/workflow/ai-email-segmentation/breakdown">
+            <Button size="lg" variant="outline">
+              Read Full Breakdown
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

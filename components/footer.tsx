@@ -9,7 +9,7 @@ export function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Newsletter Section */}
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-bold mb-4">Get a daily AI workflow in your inbox</h2>
+          <h2 className="section-heading text-center">Get a daily AI workflow in your inbox</h2>
           <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
             Join 25,000+ marketers who start their day with actionable AI workflows. No spam, just practical strategies
             you can implement today.

@@ -25,15 +25,15 @@ export function Header() {
       )}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Image src="/dailyaiworkflow-icon.png" alt="Daily AI Workflow" width={32} height={32} className="h-8 w-8" />
-            <Link href="/" className="text-xl font-bold text-gray-900">
+        <div className="flex h-20 items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Image src="/dailyaiworkflow-icon.png" alt="Daily AI Workflow" width={36} height={36} className="h-9 w-9" />
+            <Link href="/" className="text-xl sm:text-2xl font-bold text-gray-900">
               Daily AI Workflow
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-10">
             <Link href="/workflows" className="text-gray-600 hover:text-gray-900 transition-colors">
               Workflows
             </Link>
@@ -48,7 +48,7 @@ export function Header() {
             </Link>
           </nav>
 
-          <Button variant="outline" asChild>
+          <Button variant="outline" size="lg" asChild className="font-medium bg-transparent">
             <Link href="/login">Login</Link>
           </Button>
         </div>
