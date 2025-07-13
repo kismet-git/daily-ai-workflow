@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
+import { ChevronLeft, ChevronRight, Calendar, Sparkles } from "lucide-react"
 
 export function HeroSection() {
   const [currentWorkflow, setCurrentWorkflow] = useState(0)
@@ -13,18 +13,27 @@ export function HeroSection() {
       title: "AI-Powered Email Segmentation for Higher Conversions",
       description:
         "Use machine learning to automatically segment your email list based on customer behavior, purchase history, and engagement patterns. This workflow can increase email conversion rates by 40% while reducing manual work by 80%.",
+      impact: "+40% Conversion Rate",
+      difficulty: "Beginner",
+      time: "2-3 hours",
     },
     {
       date: "January 12, 2025",
       title: "Dynamic Content Personalization Engine",
       description:
         "Create personalized website experiences that adapt in real-time based on visitor behavior, demographics, and past interactions. This AI-driven approach can boost conversion rates by up to 35%.",
+      impact: "+35% Engagement",
+      difficulty: "Intermediate",
+      time: "4-6 hours",
     },
     {
       date: "January 11, 2025",
       title: "Predictive Customer Lifetime Value Calculator",
       description:
         "Leverage machine learning to predict which customers will be most valuable over time, enabling smarter acquisition spending and retention strategies that can improve ROI by 50%.",
+      impact: "+50% ROI",
+      difficulty: "Advanced",
+      time: "6-8 hours",
     },
   ]
 
@@ -39,41 +48,119 @@ export function HeroSection() {
   const currentData = workflows[currentWorkflow]
 
   return (
-    <section className="bg-gradient-to-b from-gray-50 to-white py-24 sm:py-40">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-5xl mx-auto">
+    <section className="relative bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 py-24 sm:py-32 overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-indigo-400/10 to-cyan-400/10 rounded-full blur-3xl -z-10" />
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="text-center max-w-6xl mx-auto">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm border border-blue-200/50 rounded-full text-sm font-medium text-blue-700 mb-8 shadow-sm">
+            <Sparkles className="h-4 w-4" />
+            Daily AI Workflow
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          </div>
+
           {/* Main Title */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-light text-gray-900 mb-4 leading-tight tracking-tight">
-            Workflow of the Day
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extralight text-gray-900 mb-6 leading-[0.9] tracking-tight">
+            <span className="whitespace-nowrap">
+              Workflow of the{" "}
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent font-light">
+                Day
+              </span>
+            </span>
           </h1>
-          <p className="text-xl sm:text-2xl text-gray-600 mb-20 max-w-3xl mx-auto leading-relaxed">
-            Discover actionable AI marketing strategies that drive real results
+
+          <p className="text-lg sm:text-xl lg:text-2xl xl:text-2xl text-gray-600 mb-16 max-w-4xl mx-auto leading-relaxed font-light">
+            <span className="hidden lg:inline whitespace-nowrap">
+              Discover actionable AI marketing strategies that drive real results for modern businesses
+            </span>
+            <span className="lg:hidden">
+              Discover actionable AI marketing strategies that drive real results for modern businesses
+            </span>
           </p>
 
-          {/* Navigation Controls */}
-          <div className="flex items-center justify-center gap-12 mb-20">
-            <Button
-              variant="ghost"
-              onClick={handlePrevious}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
+          {/* Workflow Card */}
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-3xl p-8 sm:p-12 shadow-xl shadow-gray-900/5 mb-16 max-w-5xl mx-auto">
+            {/* Navigation Controls */}
+            <div className="flex items-center justify-between mb-8">
+              <Button
+                variant="ghost"
+                onClick={handlePrevious}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 transition-all duration-200 rounded-xl px-4 py-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
 
-            <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-xl shadow-sm border border-gray-100">
-              <Calendar className="h-5 w-5 text-gray-500" />
-              <span className="text-gray-700 font-medium text-lg">{currentData.date}</span>
+              <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <span className="text-gray-700 font-medium text-lg">{currentData.date}</span>
+              </div>
+
+              <Button
+                variant="ghost"
+                onClick={handleNext}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 transition-all duration-200 rounded-xl px-4 py-2"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
 
-            <Button
-              variant="ghost"
-              onClick={handleNext}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Next Workflow
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            {/* Workflow Content */}
+            <div className="text-left">
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                  {currentData.impact}
+                </span>
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                  {currentData.difficulty}
+                </span>
+                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                  {currentData.time}
+                </span>
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-gray-900 mb-6 leading-tight">
+                {currentData.title}
+              </h2>
+
+              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-8 font-light">
+                {currentData.description}
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-medium shadow-lg shadow-blue-600/25 transition-all duration-200"
+                >
+                  Get This Workflow
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-gray-300 hover:bg-gray-50 px-8 py-3 rounded-xl font-medium bg-transparent"
+                >
+                  View Preview
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Workflow Indicators */}
+          <div className="flex justify-center gap-2">
+            {workflows.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentWorkflow(index)}
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  index === currentWorkflow ? "bg-blue-600 scale-110" : "bg-gray-300 hover:bg-gray-400"
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>
