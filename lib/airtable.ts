@@ -34,14 +34,9 @@ export const fetchFeatured = async (): Promise<WorkflowData | null> => {
     const viewName = process.env.AIRTABLE_VIEW || "Published"
 
     // 2️⃣  Attempt to get the most-recent featured (or first) record
-    const records = await base(tableName)
+    const records = await base(process.env.AIRTABLE_TABLE!)
       .select({
-        view: viewName,
-        // If the view has a “featured” field, sort by that; otherwise by date
-        sort: [
-          { field: "featured", direction: "desc" },
-          { field: "publishedAt", direction: "desc" },
-        ],
+        view: process.env.AIRTABLE_VIEW,
         maxRecords: 1,
       })
       .firstPage()

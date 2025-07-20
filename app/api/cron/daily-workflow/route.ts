@@ -17,7 +17,7 @@ async function pickTopic(): Promise<string> {
 
     // 2️⃣  Mark topic as used so it won't repeat
     const record = records[0]
-    await record.update({ used: true })
+    await base("Backlog").update([{ id: record.id, fields: { used: true } }])
 
     // 3️⃣  Return topic string
     return record.get("topic") as string
