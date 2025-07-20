@@ -2,32 +2,43 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Lightbulb, TrendingUp, Target, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import type { WorkflowData } from "@/lib/airtable"
 
-export function WorkflowBreakdown() {
+interface WorkflowBreakdownProps {
+  data?: WorkflowData | null
+}
+
+export function WorkflowBreakdown({ data }: WorkflowBreakdownProps) {
+  const workflow = data || {
+    why: "Email marketing remains one of the highest ROI channels, but generic campaigns are losing effectiveness. Personalized, AI-driven segmentation can increase open rates by 26% and click-through rates by 14%.",
+    signals:
+      "Leading brands like Netflix and Amazon have proven that AI-powered personalization drives revenue. Small businesses can now access similar technology through affordable AI tools and platforms.",
+    opportunity:
+      "Most marketers still use basic demographic segmentation. By implementing behavioral AI segmentation, you can outperform 80% of competitors while automating the process.",
+    executionPlan:
+      "Set up customer data collection, choose an AI segmentation tool, create dynamic email templates, and launch automated campaigns. Full implementation takes 2-3 hours with ongoing optimization.",
+  }
+
   const sections = [
     {
       icon: Lightbulb,
       title: "Why This Matters",
-      content:
-        "Email marketing remains one of the highest ROI channels, but generic campaigns are losing effectiveness. Personalized, AI-driven segmentation can increase open rates by 26% and click-through rates by 14%.",
+      content: workflow.why,
     },
     {
       icon: TrendingUp,
       title: "Signals from the Market",
-      content:
-        "Leading brands like Netflix and Amazon have proven that AI-powered personalization drives revenue. Small businesses can now access similar technology through affordable AI tools and platforms.",
+      content: workflow.signals,
     },
     {
       icon: Target,
       title: "The Opportunity",
-      content:
-        "Most marketers still use basic demographic segmentation. By implementing behavioral AI segmentation, you can outperform 80% of competitors while automating the process.",
+      content: workflow.opportunity,
     },
     {
       icon: CheckCircle,
       title: "Execution Plan",
-      content:
-        "Set up customer data collection, choose an AI segmentation tool, create dynamic email templates, and launch automated campaigns. Full implementation takes 2-3 hours with ongoing optimization.",
+      content: workflow.executionPlan,
     },
   ]
 

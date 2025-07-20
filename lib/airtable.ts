@@ -1,37 +1,33 @@
 import Airtable from "airtable"
 
-// Initialize Airtable
-const base = Airtable.base(process.env.AIRTABLE_BASE_ID!)
+const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env
 
-export interface WorkflowRecord {
-  id: string
-  fields: {
-    title: string
-    description: string
-    category: string
-    tools: string[]
-    difficulty: "Beginner" | "Intermediate" | "Advanced"
-    timeToComplete: string
-    featured?: boolean
-    used?: boolean
-    publishedAt?: string
-    author?: string
-    tags?: string[]
-    steps?: string[]
-    benefits?: string[]
-    useCases?: string[]
-    imageUrl?: string
-  }
+if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
+  throw new Error("Missing required Airtable environment variables")
 }
 
-// Retry logic with exponential backoff
-export const withRetry = async <T>(\
-  operation: () => Promise<T>,
-  maxRetries = 3,
-  baseDelay = 1000\
-)
-: Promise<T> =>
-{
+export const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID as string)
+
+export interface WorkflowData {
+  id?: string
+  title: string
+  summary: string
+  tags: string[]
+  why: string
+  signals: string
+  opportunity: string
+  executionPlan: string
+  marketSize: string
+  executionScore: number
+  ctaLabel: string
+  featured?: boolean
+  publishedAt?: string
+  difficulty?: string
+  timeToComplete?: string
+  impact?: string
+}
+
+const withRetry = async (operation: () => Promise<any>, maxRetries = 3): Promise<any> => {
   let lastError: Error
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -39,13 +35,12 @@ export const withRetry = async <T>(\
       return await operation()
     } catch (error) {
       lastError = error as Error
+      console.warn(`Attempt ${attempt} failed:`, error)
 
-      if (attempt === maxRetries) {
-        throw lastError
-      }
+      if (attempt === maxRetries) break
 
-      // Exponential backoff with jitter
-      const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000
+      // Exponential backoff
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000)
       await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }
@@ -53,141 +48,113 @@ export const withRetry = async <T>(\
   throw lastError!
 }
 
-export async function fetchWorkflows(): Promise<WorkflowRecord[]> {
-  return withRetry(async () => {
-    const records = await base("Workflows")
-      .select({
-        view: process.env.AIRTABLE_VIEW || "Grid view",
-        maxRecords: 100,
-        sort: [{ field: "publishedAt", direction: "desc" }],
-      })
-      .all()
+export const fetchFeatured = async (): Promise<WorkflowData | null> => {
+  try {
+    const tableName = process.env.AIRTABLE_TABLE || "Workflows"
+    const viewName = process.env.AIRTABLE_VIEW || "Published"
 
-    return records.map((record) => ({
-      id: record.id,
-      fields: {
-        title: (record.fields.title as string) || "",
-        description: (record.fields.description as string) || "",
-        category: (record.fields.category as string) || "General",
-        tools: Array.isArray(record.fields.tools)
-          ? (record.fields.tools as string[])
-          : typeof record.fields.tools === "string"
-            ? [record.fields.tools]
-            : [],
-        difficulty: (record.fields.difficulty as "Beginner" | "Intermediate" | "Advanced") || "Beginner",
-        timeToComplete: (record.fields.timeToComplete as string) || "30 minutes",
-        featured: Boolean(record.fields.featured),
-        used: Boolean(record.fields.used),
-        publishedAt: record.fields.publishedAt as string,
-        author: record.fields.author as string,
-        tags: Array.isArray(record.fields.tags)
-          ? (record.fields.tags as string[])
-          : typeof record.fields.tags === "string"
-            ? [record.fields.tags]
-            : [],
-        steps: Array.isArray(record.fields.steps) ? (record.fields.steps as string[]) : [],
-        benefits: Array.isArray(record.fields.benefits) ? (record.fields.benefits as string[]) : [],
-        useCases: Array.isArray(record.fields.useCases) ? (record.fields.useCases as string[]) : [],
-        imageUrl: record.fields.imageUrl as string,
-      },
-    }))
-  })
-}
+    const records = await withRetry(() => {
+      return base(tableName)
+        .select({
+          view: viewName,
+          maxRecords: 1,
+        })
+        .firstPage()
+    })
 
-export async function fetchFeatured(): Promise<WorkflowRecord[]> {
-  return withRetry(async () => {
-    const records = await base("Workflows")
-      .select({
-        filterByFormula: "{featured} = TRUE()",
-        maxRecords: 6,
-        sort: [{ field: "publishedAt", direction: "desc" }],
-      })
-      .all()
+    if (!records.length) return null
 
-    return records.map((record) => ({
-      id: record.id,
-      fields: {
-        title: (record.fields.title as string) || "",
-        description: (record.fields.description as string) || "",
-        category: (record.fields.category as string) || "General",
-        tools: Array.isArray(record.fields.tools)
-          ? (record.fields.tools as string[])
-          : typeof record.fields.tools === "string"
-            ? [record.fields.tools]
-            : [],
-        difficulty: (record.fields.difficulty as "Beginner" | "Intermediate" | "Advanced") || "Beginner",
-        timeToComplete: (record.fields.timeToComplete as string) || "30 minutes",
-        featured: Boolean(record.fields.featured),
-        used: Boolean(record.fields.used),
-        publishedAt: record.fields.publishedAt as string,
-        author: record.fields.author as string,
-        tags: Array.isArray(record.fields.tags)
-          ? (record.fields.tags as string[])
-          : typeof record.fields.tags === "string"
-            ? [record.fields.tags]
-            : [],
-        steps: Array.isArray(record.fields.steps) ? (record.fields.steps as string[]) : [],
-        benefits: Array.isArray(record.fields.benefits) ? (record.fields.benefits as string[]) : [],
-        useCases: Array.isArray(record.fields.useCases) ? (record.fields.useCases as string[]) : [],
-        imageUrl: record.fields.imageUrl as string,
-      },
-    }))
-  })
-}
+    const [rec] = records
 
-export async function pickTopic(): Promise<WorkflowRecord | null> {
-  return withRetry(async () => {
-    // Get unused records from Backlog table
-    const records = await base("Backlog")
-      .select({
-        filterByFormula: "NOT({used})",
-        maxRecords: 10,
-        sort: [{ field: "priority", direction: "desc" }],
-      })
-      .all()
-
-    if (records.length === 0) {
+    return {
+      id: rec.id,
+      ...(rec.fields as any),
+    } as WorkflowData
+  } catch (err: any) {
+    // Airtable returns plain-text 404 strings like "Could not find what you are looking for".
+    if (err?.statusCode === 404 || /not\s+find|could\s+not\s+find/i.test(err?.message ?? "")) {
+      console.warn(`[fetchFeatured] Table or view not found – returning null: ${err.message}`)
       return null
     }
 
-    // Pick a random record
-    const randomRecord = records[Math.floor(Math.random() * records.length)]
+    console.error("Error fetching featured workflow:", err)
+    return null
+  }
+}
 
-    // Mark as used
-    await base("Backlog").update([
-      {
-        id: randomRecord.id,
-        fields: { used: true },
-      },
-    ])
+export const fetchAllWorkflows = async (): Promise<WorkflowData[]> => {
+  try {
+    const { AIRTABLE_TABLE, AIRTABLE_VIEW } = process.env
 
-    return {
-      id: randomRecord.id,
-      fields: {
-        title: (randomRecord.fields.title as string) || "",
-        description: (randomRecord.fields.description as string) || "",
-        category: (randomRecord.fields.category as string) || "General",
-        tools: Array.isArray(randomRecord.fields.tools)
-          ? (randomRecord.fields.tools as string[])
-          : typeof randomRecord.fields.tools === "string"
-            ? [randomRecord.fields.tools]
-            : [],
-        difficulty: (randomRecord.fields.difficulty as "Beginner" | "Intermediate" | "Advanced") || "Beginner",
-        timeToComplete: (randomRecord.fields.timeToComplete as string) || "30 minutes",
-        featured: Boolean(randomRecord.fields.featured),
-        used: Boolean(randomRecord.fields.used),
-        publishedAt: randomRecord.fields.publishedAt as string,
-        author: randomRecord.fields.author as string,
-        tags: Array.isArray(randomRecord.fields.tags)
-          ? (randomRecord.fields.tags as string[])
-          : typeof randomRecord.fields.tags === "string"
-            ? [randomRecord.fields.tags]
-            : [],
-        steps: Array.isArray(randomRecord.fields.steps) ? (randomRecord.fields.steps as string[]) : [],
-        benefits: Array.isArray(randomRecord.fields.benefits) ? (randomRecord.fields.benefits as string[]) : [],
-        useCases: Array.isArray(randomRecord.fields.useCases) ? (randomRecord.fields.useCases as string[]) : [],
-        imageUrl: randomRecord.fields.imageUrl as string,
-      },
+    if (!AIRTABLE_TABLE || !AIRTABLE_VIEW) {
+      throw new Error("Missing Airtable table or view configuration")
     }
-  })
+
+    const records = await withRetry(() => {
+      return base(AIRTABLE_TABLE)
+        .select({
+          view: AIRTABLE_VIEW,
+          sort: [{ field: "publishedAt", direction: "desc" }],
+        })
+        .all()
+    })
+
+    return records.map((rec) => ({
+      id: rec.id,
+      ...(rec.fields as any),
+    })) as WorkflowData[]
+  } catch (error) {
+    if ((error as any)?.statusCode === 404 || /not\s+find|could\s+not\s+find/i.test((error as Error).message)) {
+      console.warn("[fetchAllWorkflows] Table or view not found – returning empty list")
+      return []
+    }
+    console.error("Error fetching all workflows:", error)
+    return []
+  }
+}
+
+export const createWorkflow = async (fields: Partial<WorkflowData>) => {
+  try {
+    const { AIRTABLE_TABLE } = process.env
+
+    if (!AIRTABLE_TABLE) {
+      throw new Error("Missing Airtable table configuration")
+    }
+
+    const workflowData = {
+      ...fields,
+      publishedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    }
+
+    const records = await withRetry(() => {
+      return base(AIRTABLE_TABLE).create([{ fields: workflowData }])
+    })
+
+    console.log("Workflow created successfully:", records[0].id)
+    return records[0]
+  } catch (error) {
+    console.error("Error creating workflow:", error)
+    throw error
+  }
+}
+
+export const updateWorkflow = async (id: string, fields: Partial<WorkflowData>) => {
+  try {
+    const { AIRTABLE_TABLE } = process.env
+
+    if (!AIRTABLE_TABLE) {
+      throw new Error("Missing Airtable table configuration")
+    }
+
+    const records = await withRetry(() => {
+      return base(AIRTABLE_TABLE).update([{ id, fields: { ...fields, updatedAt: new Date().toISOString() } }])
+    })
+
+    console.log("Workflow updated successfully:", records[0].id)
+    return records[0]
+  } catch (error) {
+    console.error("Error updating workflow:", error)
+    throw error
+  }
 }

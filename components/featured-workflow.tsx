@@ -2,8 +2,25 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { TrendingUp, Users, Clock, Target, Zap, DollarSign, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import type { WorkflowData } from "@/lib/airtable"
 
-export function FeaturedWorkflow() {
+interface FeaturedWorkflowProps {
+  data?: WorkflowData | null
+}
+
+export function FeaturedWorkflow({ data }: FeaturedWorkflowProps) {
+  // Default data if none provided
+  const workflow = data || {
+    title: "AI-Powered Email Segmentation",
+    summary:
+      "Transform your email marketing with machine learning that automatically segments subscribers for 40% better conversion rates",
+    marketSize: "$12.8B",
+    executionScore: 8.5,
+    timeToComplete: "2-3 hrs",
+    impact: "+40%",
+    tags: ["Quick Win", "40% Better Results", "$12.8B Market"],
+  }
+
   return (
     <section className="py-24 bg-gradient-to-b from-white to-gray-50/50 relative overflow-hidden">
       {/* Background Elements */}
@@ -19,13 +36,10 @@ export function FeaturedWorkflow() {
               Featured Workflow
             </div>
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extralight text-gray-900 mb-6 leading-tight tracking-tight">
-              AI-Powered Email Segmentation
+              {workflow.title}
               <span className="block text-3xl sm:text-4xl lg:text-5xl text-gray-600 mt-2">for Higher Conversions</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Transform your email marketing with machine learning that automatically segments subscribers for 40%
-              better conversion rates
-            </p>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">{workflow.summary}</p>
           </div>
 
           {/* Tags */}
@@ -36,11 +50,11 @@ export function FeaturedWorkflow() {
             </Badge>
             <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-200/50 px-4 py-2 text-sm font-medium shadow-sm">
               <TrendingUp className="h-4 w-4 mr-2" />
-              40% Better Results
+              {workflow.impact} Better Results
             </Badge>
             <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-200/50 px-4 py-2 text-sm font-medium shadow-sm">
               <DollarSign className="h-4 w-4 mr-2" />
-              $12.8B Market
+              {workflow.marketSize} Market
             </Badge>
             <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border-blue-200/50 px-4 py-2 text-sm font-medium shadow-sm">
               +5 More Benefits
@@ -54,7 +68,7 @@ export function FeaturedWorkflow() {
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Users className="h-8 w-8 text-white" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">$12.8B</div>
+                <div className="text-3xl font-bold text-gray-900 mb-2">{workflow.marketSize}</div>
                 <div className="text-sm text-gray-600 font-medium">Market Opportunity</div>
               </CardContent>
             </Card>
@@ -64,7 +78,7 @@ export function FeaturedWorkflow() {
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Target className="h-8 w-8 text-white" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">8.5/10</div>
+                <div className="text-3xl font-bold text-gray-900 mb-2">{workflow.executionScore}/10</div>
                 <div className="text-sm text-gray-600 font-medium">Execution Score</div>
               </CardContent>
             </Card>
@@ -74,7 +88,7 @@ export function FeaturedWorkflow() {
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Clock className="h-8 w-8 text-white" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">2-3 hrs</div>
+                <div className="text-3xl font-bold text-gray-900 mb-2">{workflow.timeToComplete}</div>
                 <div className="text-sm text-gray-600 font-medium">Setup Time</div>
               </CardContent>
             </Card>
@@ -84,7 +98,7 @@ export function FeaturedWorkflow() {
                 <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <TrendingUp className="h-8 w-8 text-white" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">+40%</div>
+                <div className="text-3xl font-bold text-gray-900 mb-2">{workflow.impact}</div>
                 <div className="text-sm text-gray-600 font-medium">Conversion Lift</div>
               </CardContent>
             </Card>

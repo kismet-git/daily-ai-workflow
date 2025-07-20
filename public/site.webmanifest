@@ -1,7 +1,7 @@
 {
   "name": "Daily AI Workflow",
-  "short_name": "Daily AI Workflow",
-  "description": "Discover a new AI-powered marketing workflow every day",
+  "short_name": "AI Workflow",
+  "description": "Discover AI-powered marketing workflows daily",
   "icons": [
     {
       "src": "https://c4zimgtqfyusams5.public.blob.vercel-storage.com/dailyaiworkflow-sq.png",
@@ -17,6 +17,5 @@
   "theme_color": "#2563eb",
   "background_color": "#ffffff",
   "display": "standalone",
-  "start_url": "/",
-  "scope": "/"
+  "start_url": "/"
 }

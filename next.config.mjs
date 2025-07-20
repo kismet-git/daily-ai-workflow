@@ -7,13 +7,15 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    serverComponentsExternalPackages: ['airtable'],
+    optimizePackageImports: ['lucide-react'],
   },
   images: {
-    domains: ['placeholder.com'],
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'c4zimgtqfyusams5.public.blob.vercel-storage.com',
+      },
+    ],
     unoptimized: true,
   },
   async headers() {
@@ -32,6 +34,10 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
           },
         ],
       },

@@ -6,8 +6,8 @@
     }
   ],
   "functions": {
-    "api/cron/daily-workflow.ts": {
-      "maxDuration": 60
+    "app/api/cron/daily-workflow/route.ts": {
+      "maxDuration": 30
     }
   }
 }

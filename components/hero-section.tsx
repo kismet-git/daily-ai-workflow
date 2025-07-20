@@ -1,7 +1,12 @@
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles } from "lucide-react"
+import type { WorkflowData } from "@/lib/airtable"
 
-export function HeroSection() {
+interface HeroSectionProps {
+  data?: WorkflowData | null
+}
+
+export function HeroSection({ data }: HeroSectionProps) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20 sm:py-32">
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />

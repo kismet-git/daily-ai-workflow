@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import { HeroSection } from "@/components/hero-section"
 import { FeaturedWorkflow } from "@/components/featured-workflow"
 import { WorkflowLibrary } from "@/components/workflow-library"
@@ -6,27 +5,28 @@ import { TrendsSection } from "@/components/trends-section"
 import { WorkflowBreakdown } from "@/components/workflow-breakdown"
 import { Footer } from "@/components/footer"
 import { Header } from "@/components/header"
+import { fetchFeatured } from "@/lib/airtable"
 
-export default function HomePage() {
+export const revalidate = 300
+
+export default async function HomePage() {
+  let featuredWorkflow = null
+
+  try {
+    featuredWorkflow = await fetchFeatured()
+  } catch (error) {
+    console.error("Failed to fetch featured workflow:", error)
+  }
+
   return (
-    <div className="min-h-screen bg-white">
+    <main>
       <Header />
-      <main>
-        <HeroSection />
-
-        <Suspense fallback={<div className="py-20 text-center">Loading featured workflow...</div>}>
-          <FeaturedWorkflow />
-        </Suspense>
-
-        <WorkflowBreakdown />
-
-        <Suspense fallback={<div className="py-20 text-center">Loading workflow library...</div>}>
-          <WorkflowLibrary />
-        </Suspense>
-
-        <TrendsSection />
-      </main>
+      <HeroSection data={featuredWorkflow} />
+      <FeaturedWorkflow data={featuredWorkflow} />
+      <WorkflowBreakdown data={featuredWorkflow} />
+      <WorkflowLibrary />
+      <TrendsSection />
       <Footer />
-    </div>
+    </main>
   )
 }
