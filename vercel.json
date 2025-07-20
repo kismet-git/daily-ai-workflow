@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/daily-workflow",
+      "schedule": "0 9 * * *"
+    }
+  ],
+  "functions": {
+    "api/cron/daily-workflow.ts": {
+      "maxDuration": 60
+    }
+  }
+}

@@ -3,39 +3,47 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Calendar, Sparkles } from "lucide-react"
+import type { WorkflowData } from "@/lib/airtable"
 
-export function HeroSection() {
+interface HeroSectionProps {
+  data?: WorkflowData
+}
+
+export function HeroSection({ data }: HeroSectionProps) {
   const [currentWorkflow, setCurrentWorkflow] = useState(0)
 
-  const workflows = [
+  // Fallback workflows if no data is provided
+  const fallbackWorkflows = [
     {
       date: "January 13, 2025",
       title: "AI-Powered Email Segmentation for Higher Conversions",
-      description:
+      summary:
         "Use machine learning to automatically segment your email list based on customer behavior, purchase history, and engagement patterns. This workflow can increase email conversion rates by 40% while reducing manual work by 80%.",
       impact: "+40% Conversion Rate",
       difficulty: "Beginner",
-      time: "2-3 hours",
-    },
-    {
-      date: "January 12, 2025",
-      title: "Dynamic Content Personalization Engine",
-      description:
-        "Create personalized website experiences that adapt in real-time based on visitor behavior, demographics, and past interactions. This AI-driven approach can boost conversion rates by up to 35%.",
-      impact: "+35% Engagement",
-      difficulty: "Intermediate",
-      time: "4-6 hours",
-    },
-    {
-      date: "January 11, 2025",
-      title: "Predictive Customer Lifetime Value Calculator",
-      description:
-        "Leverage machine learning to predict which customers will be most valuable over time, enabling smarter acquisition spending and retention strategies that can improve ROI by 50%.",
-      impact: "+50% ROI",
-      difficulty: "Advanced",
-      time: "6-8 hours",
+      timeToComplete: "2-3 hours",
     },
   ]
+
+  // Use provided data or fallback
+  const workflows = data
+    ? [
+        {
+          date: new Date(data.publishedAt || Date.now()).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          title: data.title,
+          summary: data.summary,
+          impact: data.impact || "+40% Results",
+          difficulty: data.difficulty || "Beginner",
+          timeToComplete: data.timeToComplete || "2-3 hours",
+        },
+      ]
+    : fallbackWorkflows
+
+  const currentData = workflows[currentWorkflow]
 
   const handlePrevious = () => {
     setCurrentWorkflow((prev) => (prev === 0 ? workflows.length - 1 : prev - 1))
@@ -44,8 +52,6 @@ export function HeroSection() {
   const handleNext = () => {
     setCurrentWorkflow((prev) => (prev === workflows.length - 1 ? 0 : prev + 1))
   }
-
-  const currentData = workflows[currentWorkflow]
 
   return (
     <section className="relative bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 py-24 sm:py-32 overflow-hidden">
@@ -93,35 +99,49 @@ export function HeroSection() {
 
           {/* Workflow Card */}
           <article className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-3xl p-8 sm:p-12 shadow-xl shadow-gray-900/5 mb-16 max-w-5xl mx-auto">
-            {/* Navigation Controls */}
-            <div className="flex items-center justify-between mb-8">
-              <Button
-                variant="ghost"
-                onClick={handlePrevious}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 transition-all duration-200 rounded-xl px-4 py-2"
-                aria-label="Previous workflow"
-              >
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                Previous
-              </Button>
+            {/* Navigation Controls - Only show if multiple workflows */}
+            {workflows.length > 1 && (
+              <div className="flex items-center justify-between mb-8">
+                <Button
+                  variant="ghost"
+                  onClick={handlePrevious}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 transition-all duration-200 rounded-xl px-4 py-2"
+                  aria-label="Previous workflow"
+                >
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                  Previous
+                </Button>
 
-              <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
-                <Calendar className="h-5 w-5 text-blue-600" aria-hidden="true" />
-                <time className="text-gray-700 font-medium text-lg" dateTime={currentData.date}>
-                  {currentData.date}
-                </time>
+                <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
+                  <Calendar className="h-5 w-5 text-blue-600" aria-hidden="true" />
+                  <time className="text-gray-700 font-medium text-lg" dateTime={currentData.date}>
+                    {currentData.date}
+                  </time>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  onClick={handleNext}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 transition-all duration-200 rounded-xl px-4 py-2"
+                  aria-label="Next workflow"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </Button>
               </div>
+            )}
 
-              <Button
-                variant="ghost"
-                onClick={handleNext}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 transition-all duration-200 rounded-xl px-4 py-2"
-                aria-label="Next workflow"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
+            {/* Single workflow date display */}
+            {workflows.length === 1 && (
+              <div className="flex justify-center mb-8">
+                <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
+                  <Calendar className="h-5 w-5 text-blue-600" aria-hidden="true" />
+                  <time className="text-gray-700 font-medium text-lg" dateTime={currentData.date}>
+                    {currentData.date}
+                  </time>
+                </div>
+              </div>
+            )}
 
             {/* Workflow Content */}
             <div className="text-left">
@@ -133,7 +153,7 @@ export function HeroSection() {
                   {currentData.difficulty}
                 </span>
                 <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                  {currentData.time}
+                  {currentData.timeToComplete}
                 </span>
               </div>
 
@@ -141,9 +161,7 @@ export function HeroSection() {
                 {currentData.title}
               </h2>
 
-              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-8 font-light">
-                {currentData.description}
-              </p>
+              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-8 font-light">{currentData.summary}</p>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
@@ -151,7 +169,7 @@ export function HeroSection() {
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-medium shadow-lg shadow-blue-600/25 transition-all duration-200"
                   aria-label="Get this AI marketing workflow"
                 >
-                  Get This Workflow
+                  {data?.ctaLabel || "Get This Workflow"}
                 </Button>
                 <Button
                   size="lg"
@@ -165,21 +183,23 @@ export function HeroSection() {
             </div>
           </article>
 
-          {/* Workflow Indicators */}
-          <div className="flex justify-center gap-2" role="tablist" aria-label="Workflow navigation">
-            {workflows.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentWorkflow(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                  index === currentWorkflow ? "bg-blue-600 scale-110" : "bg-gray-300 hover:bg-gray-400"
-                }`}
-                role="tab"
-                aria-selected={index === currentWorkflow}
-                aria-label={`View workflow ${index + 1}`}
-              />
-            ))}
-          </div>
+          {/* Workflow Indicators - Only show if multiple workflows */}
+          {workflows.length > 1 && (
+            <div className="flex justify-center gap-2" role="tablist" aria-label="Workflow navigation">
+              {workflows.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentWorkflow(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                    index === currentWorkflow ? "bg-blue-600 scale-110" : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                  role="tab"
+                  aria-selected={index === currentWorkflow}
+                  aria-label={`View workflow ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
