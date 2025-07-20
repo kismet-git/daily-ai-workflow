@@ -1,16 +1,23 @@
 import Airtable from "airtable"
 
+/* -------------------------------------------------------------------------- */
+/*  Airtable base setup                                                       */
+/* -------------------------------------------------------------------------- */
+
 const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env
 
 if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
   throw new Error("Missing required Airtable environment variables")
 }
 
-// Connection pooling and retry logic
 export const base = new Airtable({
   apiKey: AIRTABLE_API_KEY,
-  requestTimeout: 30000, // 30 second timeout
-}).base(AIRTABLE_BASE_ID as string)
+  requestTimeout: 30_000,
+}).base(AIRTABLE_BASE_ID)
+
+/* -------------------------------------------------------------------------- */
+/*  Types                                                                     */
+/* -------------------------------------------------------------------------- */
 
 export interface WorkflowData {
   id?: string
@@ -31,125 +38,95 @@ export interface WorkflowData {
   impact?: string
 }
 
-// --- retry helper -----------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/*  Helpers                                                                   */
+/* -------------------------------------------------------------------------- */
+
 /**
- * Generic helper that retries a promise-returning operation up to `maxRetries`
- * with exponential back-off (delay * attempt).
+ * Retry `operation` up to `maxRetries` times with exponential back-off.
  */
-export const withRetry = async <T>(\
-  operation: () => Promise<T>,
-  maxRetries = 3,
-  delay = 1000\
-)
-: Promise<T> =>
-{
+export async function withRetry<T>(operation: () => Promise<T>, maxRetries = 3, delay = 1_000): Promise<T> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await operation()
     } catch (error: any) {
-      // Do not retry on authentication / permission problems
+      // Stop retrying on auth / permission errors
       if (error?.statusCode === 401 || error?.statusCode === 403) {
         throw error
       }
+      if (attempt === maxRetries) throw error
 
-      if (attempt === maxRetries) {
-        throw error
-      }
-
-      console.warn(
-        `[withRetry] attempt ${attempt} failed – retrying in ${delay * attempt} ms (${error?.message ?? error})`,
-      )
-      await new Promise((r) => setTimeout(r, delay * attempt))
+      const wait = delay * attempt
+      console.warn(`[withRetry] attempt ${attempt} failed – retrying in ${wait} ms`)
+      await new Promise((r) => setTimeout(r, wait))
     }
   }
-
-  // This point should be unreachable
-  throw new Error("withRetry: exceeded max retries without success")
+  // Should be unreachable
+  throw new Error("withRetry exhausted all retries")
 }
 
-export const fetchFeatured = async (): Promise<WorkflowData | null> => {
+/* -------------------------------------------------------------------------- */
+/*  Airtable operations                                                       */
+/* -------------------------------------------------------------------------- */
+
+export async function fetchFeatured(): Promise<WorkflowData | null> {
   try {
     return await withRetry(async () => {
-      const tableName = process.env.AIRTABLE_TABLE || "Workflows"
-      const viewName = process.env.AIRTABLE_VIEW || "Published"
+      const table = process.env.AIRTABLE_TABLE ?? "Workflows"
+      const view = process.env.AIRTABLE_VIEW ?? "Published"
 
-      const records = await base(tableName)
+      const [record] = await base(table)
         .select({
-          view: viewName,
-          maxRecords: 1,
+          view,
           filterByFormula: "featured = TRUE()",
           sort: [{ field: "publishedAt", direction: "desc" }],
+          maxRecords: 1,
         })
         .firstPage()
 
-      if (!records.length) return null
-
-      const [rec] = records
-      return {
-        id: rec.id,
-        ...(rec.fields as any),
-      } as WorkflowData
+      return record ? ({ id: record.id, ...(record.fields as any) } as WorkflowData) : null
     })
-  } catch (err: any) {
-    if (err?.statusCode === 404 || /not find/i.test(err?.message)) {
-      console.warn(`[fetchFeatured] Table or view not found – returning null: ${err.message}`)
-      return null
-    }
-
-    console.error("Error fetching featured workflow:", err)
+  } catch (err) {
+    console.error("fetchFeatured failed:", err)
     return null
   }
 }
 
-export const fetchAllWorkflows = async (): Promise<WorkflowData[]> => {
+export async function fetchAllWorkflows(): Promise<WorkflowData[]> {
   try {
     return await withRetry(async () => {
       const { AIRTABLE_TABLE, AIRTABLE_VIEW } = process.env
-
-      if (!AIRTABLE_TABLE || !AIRTABLE_VIEW) {
-        throw new Error("Missing Airtable table or view configuration")
-      }
+      if (!AIRTABLE_TABLE || !AIRTABLE_VIEW) throw new Error("Airtable table/view missing")
 
       const records = await base(AIRTABLE_TABLE)
         .select({
           view: AIRTABLE_VIEW,
           sort: [{ field: "publishedAt", direction: "desc" }],
-          pageSize: 100, // Optimize batch size
+          pageSize: 100,
         })
         .all()
 
-      return records.map((rec) => ({
-        id: rec.id,
-        ...(rec.fields as any),
-      })) as WorkflowData[]
+      return records.map((r) => ({ id: r.id, ...(r.fields as any) })) as WorkflowData[]
     })
-  } catch (error) {
-    console.error("Error fetching all workflows:", error)
+  } catch (err) {
+    console.error("fetchAllWorkflows failed:", err)
     return []
   }
 }
 
-export const createWorkflow = async (fields: Partial<WorkflowData>) => {
-  try {
-    return await withRetry(async () => {
-      const { AIRTABLE_TABLE } = process.env
+export async function createWorkflow(fields: Partial<WorkflowData>) {
+  return withRetry(async () => {
+    const table = process.env.AIRTABLE_TABLE
+    if (!table) throw new Error("Airtable table missing")
 
-      if (!AIRTABLE_TABLE) {
-        throw new Error("Missing Airtable table configuration")
-      }
-
-      const workflowData = {
-        ...fields,
-        publishedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      }
-
-      const records = await base(AIRTABLE_TABLE).create([{ fields: workflowData }])
-      console.log("Workflow created successfully:", records[0].id)
-      return records[0]
-    })
-  } catch (error) {
-    console.error("Error creating workflow:", error)
-    throw error
-  }
+    const [record] = await base(table).create([
+      {
+        fields: {
+          ...fields,
+          publishedAt: new Date().toISOString(),
+        },
+      },
+    ])
+    return { id: record.id, ...(record.fields as any) } as WorkflowData
+  })
 }
