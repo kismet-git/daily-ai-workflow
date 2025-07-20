@@ -31,11 +31,15 @@ export interface WorkflowData {
   impact?: string
 }
 
-// Enhanced error handling and retry logic
-const withRetry = async <T>(\
-  operation: () => Promise<T>,\
-  maxRetries: number = 3,\
-  delay: number = 1000\
+// --- retry helper -----------------------------------------------------------
+/**
+ * Generic helper that retries a promise-returning operation up to `maxRetries`
+ * with exponential back-off (delay * attempt).
+ */
+export const withRetry = async <T>(\
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  delay = 1000\
 )
 : Promise<T> =>
 {
@@ -43,18 +47,24 @@ const withRetry = async <T>(\
     try {
       return await operation()
     } catch (error: any) {
-      if (attempt === maxRetries) throw error
-
-      // Don't retry on authentication errors
+      // Do not retry on authentication / permission problems
       if (error?.statusCode === 401 || error?.statusCode === 403) {
         throw error
       }
 
-      console.warn(`Attempt ${attempt} failed, retrying in ${delay * attempt}ms...`)
-      await new Promise((resolve) => setTimeout(resolve, delay * attempt))
+      if (attempt === maxRetries) {
+        throw error
+      }
+
+      console.warn(
+        `[withRetry] attempt ${attempt} failed – retrying in ${delay * attempt} ms (${error?.message ?? error})`,
+      )
+      await new Promise((r) => setTimeout(r, delay * attempt))
     }
   }
-  throw new Error("Max retries exceeded")
+
+  // This point should be unreachable
+  throw new Error("withRetry: exceeded max retries without success")
 }
 
 export const fetchFeatured = async (): Promise<WorkflowData | null> => {

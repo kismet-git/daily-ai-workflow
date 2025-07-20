@@ -1,133 +1,82 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { revalidateTag } from "next/cache"
+import { pickTopic } from "@/lib/airtable"
+import { generateText } from "ai"
+import { openai } from "@ai-sdk/openai"
 
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
-const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE || "Backlog"
-const AIRTABLE_VIEW = process.env.AIRTABLE_VIEW || "Grid view"
-
-interface AirtableRecord {
-  id: string
-  fields: {
-    title?: string
-    description?: string
-    category?: string
-    difficulty?: string
-    timeToComplete?: string
-    tools?: string[]
-    used?: boolean
-  }
-}
-
-interface AirtableResponse {
-  records: AirtableRecord[]
-}
-
-async function fetchUnusedWorkflows(): Promise<AirtableRecord[]> {
-  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE}?view=${encodeURIComponent(AIRTABLE_VIEW)}&filterByFormula=NOT({used})`
-
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Airtable API error: ${response.status} ${response.statusText}`)
-  }
-
-  const data: AirtableResponse = await response.json()
-  return data.records
-}
-
-async function pickTopic(): Promise<AirtableRecord | null> {
+export async function POST(request: NextRequest) {
   try {
-    const records = await fetchUnusedWorkflows()
-
-    if (records.length === 0) {
-      console.log("No unused workflows found")
-      return null
-    }
-
-    // Pick a random record
-    const randomIndex = Math.floor(Math.random() * records.length)
-    const selectedRecord = records[randomIndex]
-
-    // Mark as used
-    const updateUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE}`
-
-    await fetch(updateUrl, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        records: [
-          {
-            id: selectedRecord.id,
-            fields: {
-              used: true,
-            },
-          },
-        ],
-      }),
-    })
-
-    return selectedRecord
-  } catch (error) {
-    console.error("Error in pickTopic:", error)
-    throw error
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    // Verify the request is authorized (check for cron secret or other auth)
+    // Verify cron secret
     const authHeader = request.headers.get("authorization")
-    const cronSecret = process.env.CRON_SECRET
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("Starting daily workflow cron job...")
+    console.log("Starting daily workflow generation...")
 
-    const selectedWorkflow = await pickTopic()
-
-    if (!selectedWorkflow) {
-      return NextResponse.json({
-        success: true,
-        message: "No unused workflows available",
-        workflow: null,
-      })
+    // Pick a random topic from backlog
+    const topic = await pickTopic()
+    if (!topic) {
+      console.log("No topics available")
+      return NextResponse.json({ message: "No topics available" }, { status: 200 })
     }
 
-    // Revalidate the cache for the featured workflow
-    revalidateTag("featured-workflow")
+    console.log("Selected topic:", topic.title)
 
-    console.log("Daily workflow cron job completed successfully")
+    // Generate workflow content using AI
+    const { text } = await generateText({
+      model: openai("gpt-4o"),
+      system: `You are an expert marketing strategist. Create a detailed, actionable AI-powered marketing workflow based on the given topic. 
+
+Format your response as a JSON object with these fields:
+- title: A compelling title for the workflow
+- description: A brief description (2-3 sentences)
+- category: The marketing category (e.g., "Content Marketing", "Social Media", "Email Marketing")
+- difficulty: "Beginner", "Intermediate", or "Advanced"
+- timeToComplete: Estimated time (e.g., "30 minutes", "2 hours")
+- tools: Array of AI tools/platforms needed
+- steps: Array of detailed step-by-step instructions
+
+Make it practical and actionable for marketers.`,
+      prompt: `Create a marketing workflow for: ${topic.title}\n\nDescription: ${topic.description}`,
+    })
+
+    console.log("Generated workflow content")
+
+    // Parse the AI response
+    let workflowData
+    try {
+      workflowData = JSON.parse(text)
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", parseError)
+      return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 })
+    }
+
+    // Here you would typically save the generated workflow to your database
+    // For now, we'll just log it
+    console.log("Generated workflow:", workflowData)
+
+    // Trigger revalidation of the homepage
+    const revalidateUrl = `${process.env.VERCEL_URL || "http://localhost:3000"}/api/revalidate`
+    try {
+      await fetch(revalidateUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ secret: process.env.REVALIDATE_SECRET }),
+      })
+      console.log("Homepage revalidated")
+    } catch (revalidateError) {
+      console.error("Failed to revalidate:", revalidateError)
+    }
 
     return NextResponse.json({
-      success: true,
-      message: "Daily workflow updated successfully",
-      workflow: {
-        id: selectedWorkflow.id,
-        title: selectedWorkflow.fields.title,
-        category: selectedWorkflow.fields.category,
-      },
+      message: "Daily workflow generated successfully",
+      topic: topic.title,
+      workflow: workflowData,
     })
   } catch (error) {
-    console.error("Daily workflow cron job failed:", error)
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Internal server error",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    console.error("Error in daily workflow cron:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

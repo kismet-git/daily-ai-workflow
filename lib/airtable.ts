@@ -1,137 +1,127 @@
 import Airtable from "airtable"
 
-const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env
+// Initialize Airtable
+const base = Airtable.base(process.env.AIRTABLE_BASE_ID!)
 
-if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-  throw new Error("Missing required Airtable environment variables")
-}
-
-export const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID as string)
-
-export interface WorkflowData {
-  id?: string
+export interface WorkflowRecord {
+  id: string
   title: string
-  summary: string
-  tags: string[]
-  why: string
-  signals: string
-  opportunity: string
-  executionPlan: string
-  marketSize: string
-  executionScore: number
-  ctaLabel: string
-  featured?: boolean
-  publishedAt?: string
-  difficulty?: string
-  timeToComplete?: string
-  impact?: string
+  description: string
+  category: string
+  difficulty: string
+  timeToComplete: string
+  tools: string[]
+  steps: string[]
+  featured: boolean
+  used?: boolean
+  createdAt: string
 }
 
-export const fetchFeatured = async (): Promise<WorkflowData | null> => {
+export async function fetchWorkflows(): Promise<WorkflowRecord[]> {
   try {
-    // 1️⃣  Figure out which table + view to query, with sane defaults
-    const tableName = process.env.AIRTABLE_TABLE || "Workflows"
-    const viewName = process.env.AIRTABLE_VIEW || "Published"
-
-    // 2️⃣  Attempt to get the most-recent featured (or first) record
     const records = await base(process.env.AIRTABLE_TABLE!)
       .select({
-        view: process.env.AIRTABLE_VIEW,
-        maxRecords: 1,
+        view: process.env.AIRTABLE_VIEW!,
+        maxRecords: 100,
       })
-      .firstPage()
+      .all()
 
-    // 3️⃣  Return null (not an error) if nothing found
-    if (!records.length) return null
+    return records.map((record) => ({
+      id: record.id,
+      title: record.get("title") as string,
+      description: record.get("description") as string,
+      category: record.get("category") as string,
+      difficulty: record.get("difficulty") as string,
+      timeToComplete: record.get("timeToComplete") as string,
+      tools: (record.get("tools") as string)?.split(",").map((tool) => tool.trim()) || [],
+      steps: (record.get("steps") as string)?.split("\n").filter(Boolean) || [],
+      featured: (record.get("featured") as boolean) || false,
+      used: (record.get("used") as boolean) || false,
+      createdAt: (record.get("createdAt") as string) || new Date().toISOString(),
+    }))
+  } catch (error) {
+    console.error("Error fetching workflows:", error)
+    throw new Error("Failed to fetch workflows")
+  }
+}
 
-    const [rec] = records
+export async function fetchFeatured(): Promise<WorkflowRecord | null> {
+  try {
+    const records = await base(process.env.AIRTABLE_TABLE!)
+      .select({
+        filterByFormula: "{featured} = TRUE()",
+        maxRecords: 1,
+        sort: [{ field: "createdAt", direction: "desc" }],
+      })
+      .all()
 
-    return {
-      id: rec.id,
-      ...(rec.fields as any),
-    } as WorkflowData
-  } catch (err: any) {
-    /*  
-      Airtable throws a NOT_FOUND error when the table or view
-      doesn’t exist (“Could not find what you are looking for”).
-      We treat that as “no data” instead of crashing the app.
-    */
-    if (err?.statusCode === 404 || /not find/i.test(err?.message)) {
-      console.warn(`[fetchFeatured] Table or view not found – returning null instead of error: ${err.message}`)
+    if (records.length === 0) {
       return null
     }
 
-    console.error("Error fetching featured workflow:", err)
+    const record = records[0]
+    return {
+      id: record.id,
+      title: record.get("title") as string,
+      description: record.get("description") as string,
+      category: record.get("category") as string,
+      difficulty: record.get("difficulty") as string,
+      timeToComplete: record.get("timeToComplete") as string,
+      tools: (record.get("tools") as string)?.split(",").map((tool) => tool.trim()) || [],
+      steps: (record.get("steps") as string)?.split("\n").filter(Boolean) || [],
+      featured: true,
+      used: (record.get("used") as boolean) || false,
+      createdAt: (record.get("createdAt") as string) || new Date().toISOString(),
+    }
+  } catch (error) {
+    console.error("Error fetching featured workflow:", error)
     return null
   }
 }
 
-export const fetchAllWorkflows = async (): Promise<WorkflowData[]> => {
+export async function pickTopic(): Promise<WorkflowRecord | null> {
   try {
-    const { AIRTABLE_TABLE, AIRTABLE_VIEW } = process.env
-
-    if (!AIRTABLE_TABLE || !AIRTABLE_VIEW) {
-      throw new Error("Missing Airtable table or view configuration")
-    }
-
-    const records = await base(AIRTABLE_TABLE)
+    const records = await base("Backlog")
       .select({
-        view: AIRTABLE_VIEW,
-        sort: [{ field: "publishedAt", direction: "desc" }],
+        filterByFormula: "{used} != TRUE()",
+        maxRecords: 10,
       })
       .all()
 
-    return records.map((rec) => ({
-      id: rec.id,
-      ...(rec.fields as any),
-    })) as WorkflowData[]
-  } catch (error) {
-    console.error("Error fetching all workflows:", error)
-    return []
-  }
-}
-
-export const createWorkflow = async (fields: Partial<WorkflowData>) => {
-  try {
-    const { AIRTABLE_TABLE } = process.env
-
-    if (!AIRTABLE_TABLE) {
-      throw new Error("Missing Airtable table configuration")
+    if (records.length === 0) {
+      console.log("No unused topics found")
+      return null
     }
 
-    // Add timestamp
-    const workflowData = {
-      ...fields,
-      publishedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    }
+    // Pick a random topic
+    const randomIndex = Math.floor(Math.random() * records.length)
+    const selectedRecord = records[randomIndex]
 
-    const records = await base(AIRTABLE_TABLE).create([{ fields: workflowData }])
-
-    console.log("Workflow created successfully:", records[0].id)
-    return records[0]
-  } catch (error) {
-    console.error("Error creating workflow:", error)
-    throw error
-  }
-}
-
-export const updateWorkflow = async (id: string, fields: Partial<WorkflowData>) => {
-  try {
-    const { AIRTABLE_TABLE } = process.env
-
-    if (!AIRTABLE_TABLE) {
-      throw new Error("Missing Airtable table configuration")
-    }
-
-    const records = await base(AIRTABLE_TABLE).update([
-      { id, fields: { ...fields, updatedAt: new Date().toISOString() } },
+    // Mark as used
+    await base("Backlog").update([
+      {
+        id: selectedRecord.id,
+        fields: {
+          used: true,
+        },
+      },
     ])
 
-    console.log("Workflow updated successfully:", records[0].id)
-    return records[0]
+    return {
+      id: selectedRecord.id,
+      title: selectedRecord.get("title") as string,
+      description: selectedRecord.get("description") as string,
+      category: selectedRecord.get("category") as string,
+      difficulty: selectedRecord.get("difficulty") as string,
+      timeToComplete: selectedRecord.get("timeToComplete") as string,
+      tools: (selectedRecord.get("tools") as string)?.split(",").map((tool) => tool.trim()) || [],
+      steps: (selectedRecord.get("steps") as string)?.split("\n").filter(Boolean) || [],
+      featured: false,
+      used: true,
+      createdAt: (selectedRecord.get("createdAt") as string) || new Date().toISOString(),
+    }
   } catch (error) {
-    console.error("Error updating workflow:", error)
-    throw error
+    console.error("Error picking topic:", error)
+    return null
   }
 }

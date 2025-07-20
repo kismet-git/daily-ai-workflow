@@ -1,21 +1,15 @@
-export function validateEnvironment() {
-  const requiredEnvVars = ["AIRTABLE_API_KEY", "AIRTABLE_BASE_ID", "AIRTABLE_TABLE"]
+/**
+ * Basic runtime checks to ensure all required environment variables are set.
+ * In production, throw an error so the deployment fails fast instead of
+ * crashing at runtime.
+ */
+const REQUIRED_VARS = ["AIRTABLE_API_KEY", "AIRTABLE_BASE_ID", "AIRTABLE_TABLE", "CRON_SECRET"]
 
-  const missingVars = requiredEnvVars.filter((varName) => !process.env[varName])
+export function validateEnvironment(): void {
+  if (process.env.NODE_ENV !== "production") return
 
-  if (missingVars.length > 0) {
-    throw new Error(`Missing required environment variables: ${missingVars.join(", ")}`)
+  const missing = REQUIRED_VARS.filter((key) => !process.env[key])
+  if (missing.length) {
+    throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
   }
-}
-
-export function sanitizeInput(input: string): string {
-  return input
-    .replace(/[<>]/g, "") // Remove potential XSS characters
-    .trim()
-    .slice(0, 1000) // Limit length
-}
-
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
 }

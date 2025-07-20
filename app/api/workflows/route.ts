@@ -1,20 +1,12 @@
 import { NextResponse } from "next/server"
-import { fetchAllWorkflows } from "@/lib/airtable"
-
-export const revalidate = 300 // Cache for 5 minutes
-export const dynamic = "force-dynamic"
+import { fetchWorkflows } from "@/lib/airtable"
 
 export async function GET() {
   try {
-    const workflows = await fetchAllWorkflows()
-
-    return NextResponse.json(workflows, {
-      headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-      },
-    })
+    const workflows = await fetchWorkflows()
+    return NextResponse.json(workflows)
   } catch (error) {
-    console.error("Error in workflows API:", error)
+    console.error("Error fetching workflows:", error)
     return NextResponse.json({ error: "Failed to fetch workflows" }, { status: 500 })
   }
 }

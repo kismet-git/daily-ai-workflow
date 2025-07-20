@@ -1,23 +1,43 @@
-export function measurePerformance(name: string, fn: () => Promise<any>) {
-  return async (...args: any[]) => {
-    const start = performance.now()
-    try {
-      const result = await fn.apply(this, args)
-      const end = performance.now()
-      console.log(`${name} took ${end - start} milliseconds`)
-      return result
-    } catch (error) {
-      const end = performance.now()
-      console.error(`${name} failed after ${end - start} milliseconds:`, error)
-      throw error
-    }
+// Performance monitoring utilities
+export const measurePerformance = (name: string) => {
+  const start = performance.now()
+
+  return {
+    end: () => {
+      const duration = performance.now() - start
+      console.log(`${name} took ${duration.toFixed(2)}ms`)
+      return duration
+    },
   }
 }
 
-export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => func.apply(this, args), wait)
+export const withPerformanceLogging = async <T>(\
+  name: string,\
+  fn: () => Promise<T>\
+)
+: Promise<T> =>
+{
+  const measure = measurePerformance(name)
+  try {
+    const result = await fn()
+    measure.end()
+    return result;
+  } catch (error) {
+    measure.end()
+    throw error
   }
+}
+
+// Simple memory usage tracker
+export const getMemoryUsage = () => {
+  if (typeof process !== "undefined" && process.memoryUsage) {
+    const usage = process.memoryUsage()
+    return {
+      rss: Math.round(usage.rss / 1024 / 1024),
+      heapTotal: Math.round(usage.heapTotal / 1024 / 1024),
+      heapUsed: Math.round(usage.heapUsed / 1024 / 1024),
+      external: Math.round(usage.external / 1024 / 1024),
+    }
+  }
+  return null
 }
