@@ -6,15 +6,17 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'c4zimgtqfyusams5.public.blob.vercel-storage.com',
-        port: '',
-        pathname: '/**',
       },
     ],
+    unoptimized: true,
   },
   async headers() {
     return [
@@ -31,7 +33,7 @@ const nextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
+            value: 'origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
@@ -39,27 +41,8 @@ const nextConfig = {
           },
         ],
       },
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-        ],
-      },
     ]
   },
-  async redirects() {
-    return [
-      {
-        source: '/home',
-        destination: '/',
-        permanent: true,
-      },
-    ]
-  },
-  poweredByHeader: false,
 }
 
 export default nextConfig
