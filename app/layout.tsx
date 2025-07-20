@@ -1,107 +1,59 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { ErrorBoundary } from "@/components/error-boundary"
-import { validateEnvironment } from "@/lib/security"
+import { Inter } from "next/font/google"
 import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
+import ErrorBoundary from "@/components/error-boundary"
+import { validateEnvironment } from "@/lib/security"
 
-// Validate environment on startup
+const inter = Inter({ subsets: ["latin"] })
+
+// Validate environment variables on startup
 if (process.env.NODE_ENV === "production") {
-  try {
-    validateEnvironment()
-  } catch (error) {
-    console.error("Environment validation failed:", error)
-  }
+  validateEnvironment()
 }
 
 export const metadata: Metadata = {
-  title: "Daily AI Workflow – One AI-powered marketing workflow, delivered daily",
+  title: "Daily AI Workflow - Discover AI-Powered Productivity",
   description:
-    "Discover a new AI-powered marketing workflow every day. Built for marketers who want clear, actionable strategies powered by AI.",
-  keywords:
-    "AI marketing, marketing workflows, AI automation, marketing strategies, artificial intelligence, digital marketing, marketing tools",
-  authors: [{ name: "Daily AI Workflow" }],
+    "Discover curated AI workflows to boost your productivity. From automation to content creation, find the perfect AI tools and processes for your daily tasks.",
+  keywords: "AI workflows, productivity, automation, artificial intelligence, daily tasks, AI tools",
+  authors: [{ name: "Daily AI Workflow Team" }],
   creator: "Daily AI Workflow",
   publisher: "Daily AI Workflow",
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-  alternates: {
-    canonical: "https://www.dailyaiworkflow.com",
-  },
+  robots: "index, follow",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://www.dailyaiworkflow.com",
-    title: "Daily AI Workflow – One AI-powered marketing workflow, delivered daily",
+    url: "https://dailyaiworkflow.com",
+    title: "Daily AI Workflow - Discover AI-Powered Productivity",
     description:
-      "Discover a new AI-powered marketing workflow every day. Built for marketers who want clear, actionable strategies powered by AI.",
+      "Discover curated AI workflows to boost your productivity. From automation to content creation, find the perfect AI tools and processes for your daily tasks.",
     siteName: "Daily AI Workflow",
-    images: [
-      {
-        url: "https://c4zimgtqfyusams5.public.blob.vercel-storage.com/dailyaiworkflow-sq.png",
-        width: 1200,
-        height: 630,
-        alt: "Daily AI Workflow - AI Marketing Workflows",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Daily AI Workflow – One AI-powered marketing workflow, delivered daily",
+    title: "Daily AI Workflow - Discover AI-Powered Productivity",
     description:
-      "Discover a new AI-powered marketing workflow every day. Built for marketers who want clear, actionable strategies powered by AI.",
-    images: ["https://c4zimgtqfyusams5.public.blob.vercel-storage.com/dailyaiworkflow-sq.png"],
+      "Discover curated AI workflows to boost your productivity. From automation to content creation, find the perfect AI tools and processes for your daily tasks.",
     creator: "@dailyaiworkflow",
   },
   verification: {
     google: process.env.GOOGLE_VERIFICATION_CODE,
   },
-  category: "technology",
     generator: 'v0.dev'
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Favicon and Icons */}
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="https://c4zimgtqfyusams5.public.blob.vercel-storage.com/dailyaiworkflow-sq.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="https://c4zimgtqfyusams5.public.blob.vercel-storage.com/dailyaiworkflow-sq.png"
-        />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="https://c4zimgtqfyusams5.public.blob.vercel-storage.com/dailyaiworkflow-sq.png"
-        />
-        <link rel="manifest" href="/site.webmanifest" />
-        <meta name="theme-color" content="#2563eb" />
-
-        {/* Preconnect to external domains for performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-
-        {/* Google tag (gtag.js) */}
+        {/* Google Analytics */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-4HW4FS672X"></script>
         <script
           dangerouslySetInnerHTML={{
@@ -113,38 +65,14 @@ export default function RootLayout({
             `,
           }}
         />
-
-        {/* Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "Daily AI Workflow",
-              description:
-                "Discover a new AI-powered marketing workflow every day. Built for marketers who want clear, actionable strategies powered by AI.",
-              url: "https://www.dailyaiworkflow.com",
-              potentialAction: {
-                "@type": "SearchAction",
-                target: "https://www.dailyaiworkflow.com/search?q={search_term_string}",
-                "query-input": "required name=search_term_string",
-              },
-              publisher: {
-                "@type": "Organization",
-                name: "Daily AI Workflow",
-                url: "https://www.dailyaiworkflow.com",
-                logo: {
-                  "@type": "ImageObject",
-                  url: "https://c4zimgtqfyusams5.public.blob.vercel-storage.com/dailyaiworkflow-sq.png",
-                },
-              },
-            }),
-          }}
-        />
       </head>
-      <body>
-        <ErrorBoundary>{children}</ErrorBoundary>
+      <body className={inter.className}>
+        <ErrorBoundary>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

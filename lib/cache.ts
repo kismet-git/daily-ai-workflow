@@ -4,20 +4,21 @@ interface CacheItem<T> {
   expires: number
 }
 
-class SimpleCache {
-  private cache = new Map<string, CacheItem<any>>()
+class SimpleCache<T> {
+  private cache = new Map<string, CacheItem<T>>()
 
-  set<T>(key: string, value: T, ttlMs = 300000): void {
+  set(key: string, value: T, ttlMs = 300000): void {
     // 5 minutes default
-    this.cache.set(key, {
-      value,
-      expires: Date.now() + ttlMs,
-    })
+    const expires = Date.now() + ttlMs
+    this.cache.set(key, { value, expires })
   }
 
-  get<T>(key: string): T | null {
+  get(key: string): T | null {
     const item = this.cache.get(key)
-    if (!item) return null
+
+    if (!item) {
+      return null
+    }
 
     if (Date.now() > item.expires) {
       this.cache.delete(key)
@@ -27,30 +28,50 @@ class SimpleCache {
     return item.value
   }
 
-  delete(key: string): boolean {
-    return this.cache.delete(key)
+  delete(key: string): void {
+    this.cache.delete(key)
   }
 
   clear(): void {
     this.cache.clear()
   }
 
-  size(): number {
-    return this.cache.size
+  // Clean up expired entries
+  cleanup(): void {
+    const now = Date.now()
+    for (const [key, item] of this.cache.entries()) {
+      if (now > item.expires) {
+        this.cache.delete(key)
+      }
+    }
   }
 }
 
-export const cache = new SimpleCache()
-\
-export const withCache = async <T>(key: string, fn: () => Promise<T>, ttlMs = 300000)
-: Promise<T> =>
-{
-  const cached = cache.get<T>(key)
-  if (cached !== null) {
-    return cached;
-  }
+// Global cache instances
+export const workflowCache = new SimpleCache<any>()
+export const featuredCache = new SimpleCache<any>()
 
-  const result = await fn()
-  cache.set(key, result, ttlMs)
-  return result;
+// Cache helper functions
+export function setCache<T>(key: string, value: T, ttlMs?: number): void {
+  workflowCache.set(key, value, ttlMs)
+}
+
+export function getCache<T>(key: string): T | null {
+  return workflowCache.get(key) as T | null
+}
+
+export function clearCache(): void {
+  workflowCache.clear()
+  featuredCache.clear()
+}
+
+// Periodic cleanup (run every 10 minutes)
+if (typeof setInterval !== "undefined") {
+  setInterval(
+    () => {
+      workflowCache.cleanup()
+      featuredCache.cleanup()
+    },
+    10 * 60 * 1000,
+  )
 }
