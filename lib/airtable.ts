@@ -53,14 +53,38 @@ export const fetchFeatured = async (): Promise<WorkflowData | null> => {
     const tableName = process.env.AIRTABLE_TABLE || "Workflows"
     const viewName = process.env.AIRTABLE_VIEW || "Published"
 
-    const records = await withRetry(() => {
-      return base(tableName)
-        .select({
-          view: viewName,
-          maxRecords: 1,
-        })
-        .firstPage()
-    })
+    let records: Airtable.Record<{}>[] = []
+
+    try {
+      // Primary attempt – use configured view
+      records = await withRetry(() =>
+        base(tableName)
+          .select({
+            view: viewName,
+            maxRecords: 1,
+          })
+          .firstPage(),
+      )
+    } catch (err: any) {
+      // If the view or table wasn’t found, silently fall back to “no-view” query
+      if (
+        err?.statusCode === 422 || // Airtable “Unprocessable Entity”
+        err?.statusCode === 404 ||
+        /could\s*not\s*find/i.test(err?.message ?? "")
+      ) {
+        console.warn(`[fetchFeatured] View "${viewName}" not found – falling back to first record in table`)
+        records = await withRetry(() =>
+          base(tableName)
+            .select({
+              maxRecords: 1,
+              sort: [{ field: "createdAt", direction: "desc" }],
+            })
+            .firstPage(),
+        )
+      } else {
+        throw err
+      }
+    }
 
     if (!records.length) return null
 
@@ -77,7 +101,6 @@ export const fetchFeatured = async (): Promise<WorkflowData | null> => {
       return null
     }
 
-    console.error("Error fetching featured workflow:", err)
     return null
   }
 }
@@ -90,14 +113,30 @@ export const fetchAllWorkflows = async (): Promise<WorkflowData[]> => {
       throw new Error("Missing Airtable table or view configuration")
     }
 
-    const records = await withRetry(() => {
-      return base(AIRTABLE_TABLE)
-        .select({
-          view: AIRTABLE_VIEW,
-          sort: [{ field: "publishedAt", direction: "desc" }],
-        })
-        .all()
-    })
+    let records: Airtable.Record<{}>[] = []
+    try {
+      records = await withRetry(() =>
+        base(AIRTABLE_TABLE)
+          .select({
+            view: AIRTABLE_VIEW,
+            sort: [{ field: "publishedAt", direction: "desc" }],
+          })
+          .all(),
+      )
+    } catch (err: any) {
+      if (err?.statusCode === 422 || err?.statusCode === 404 || /could\s*not\s*find/i.test(err?.message ?? "")) {
+        console.warn(`[fetchAllWorkflows] View "${AIRTABLE_VIEW}" not found – returning all records without a view`)
+        records = await withRetry(() =>
+          base(AIRTABLE_TABLE)
+            .select({
+              sort: [{ field: "createdAt", direction: "desc" }],
+            })
+            .all(),
+        )
+      } else {
+        throw err
+      }
+    }
 
     return records.map((rec) => ({
       id: rec.id,
@@ -108,7 +147,6 @@ export const fetchAllWorkflows = async (): Promise<WorkflowData[]> => {
       console.warn("[fetchAllWorkflows] Table or view not found – returning empty list")
       return []
     }
-    console.error("Error fetching all workflows:", error)
     return []
   }
 }
