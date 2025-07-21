@@ -22,7 +22,7 @@ export function FeaturedWorkflow({ data }: FeaturedWorkflowProps) {
   }
 
   return (
-    <section className="py-24 bg-gradient-to-b from-white to-gray-50/50 relative overflow-hidden">
+    <section id="featured" className="py-24 bg-gradient-to-b from-white to-gray-50/50 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute top-0 left-1/4 w-72 h-72 bg-gradient-to-br from-blue-100/40 to-purple-100/40 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-gradient-to-br from-indigo-100/40 to-cyan-100/40 rounded-full blur-3xl -z-10" />

@@ -2,11 +2,18 @@ import Airtable from "airtable"
 
 const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env
 
-if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-  throw new Error("Missing required Airtable environment variables")
+// Only initialize Airtable if we have the required environment variables
+let base: any = null
+
+if (AIRTABLE_API_KEY && AIRTABLE_BASE_ID) {
+  try {
+    base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID as string)
+  } catch (error) {
+    console.error("Failed to initialize Airtable:", error)
+  }
 }
 
-export const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID as string)
+export { base }
 
 export interface WorkflowData {
   id?: string
@@ -49,6 +56,12 @@ const withRetry = async (operation: () => Promise<any>, maxRetries = 3): Promise
 }
 
 export const fetchFeatured = async (): Promise<WorkflowData | null> => {
+  // Return null if Airtable is not configured
+  if (!base) {
+    console.warn("Airtable not configured, returning null")
+    return null
+  }
+
   try {
     const tableName = process.env.AIRTABLE_TABLE || "Workflows"
     const viewName = process.env.AIRTABLE_VIEW || "Published"
@@ -66,9 +79,9 @@ export const fetchFeatured = async (): Promise<WorkflowData | null> => {
           .firstPage(),
       )
     } catch (err: any) {
-      // If the view or table wasn’t found, silently fall back to “no-view” query
+      // If the view or table wasn't found, silently fall back to "no-view" query
       if (
-        err?.statusCode === 422 || // Airtable “Unprocessable Entity”
+        err?.statusCode === 422 || // Airtable "Unprocessable Entity"
         err?.statusCode === 404 ||
         /could\s*not\s*find/i.test(err?.message ?? "")
       ) {
@@ -101,16 +114,24 @@ export const fetchFeatured = async (): Promise<WorkflowData | null> => {
       return null
     }
 
+    console.error("Error fetching featured workflow:", err)
     return null
   }
 }
 
 export const fetchAllWorkflows = async (): Promise<WorkflowData[]> => {
+  // Return empty array if Airtable is not configured
+  if (!base) {
+    console.warn("Airtable not configured, returning empty array")
+    return []
+  }
+
   try {
     const { AIRTABLE_TABLE, AIRTABLE_VIEW } = process.env
 
     if (!AIRTABLE_TABLE || !AIRTABLE_VIEW) {
-      throw new Error("Missing Airtable table or view configuration")
+      console.warn("Missing Airtable table or view configuration")
+      return []
     }
 
     let records: Airtable.Record<{}>[] = []
@@ -147,11 +168,16 @@ export const fetchAllWorkflows = async (): Promise<WorkflowData[]> => {
       console.warn("[fetchAllWorkflows] Table or view not found – returning empty list")
       return []
     }
+    console.error("Error fetching workflows:", error)
     return []
   }
 }
 
 export const createWorkflow = async (fields: Partial<WorkflowData>) => {
+  if (!base) {
+    throw new Error("Airtable not configured")
+  }
+
   try {
     const { AIRTABLE_TABLE } = process.env
 
@@ -178,6 +204,10 @@ export const createWorkflow = async (fields: Partial<WorkflowData>) => {
 }
 
 export const updateWorkflow = async (id: string, fields: Partial<WorkflowData>) => {
+  if (!base) {
+    throw new Error("Airtable not configured")
+  }
+
   try {
     const { AIRTABLE_TABLE } = process.env
 

@@ -13,9 +13,15 @@ export default async function HomePage() {
   let featuredWorkflow = null
 
   try {
-    featuredWorkflow = await fetchFeatured()
+    // Only attempt to fetch if we have the required environment variables
+    if (process.env.AIRTABLE_API_KEY && process.env.AIRTABLE_BASE_ID) {
+      featuredWorkflow = await fetchFeatured()
+    } else {
+      console.warn("Airtable environment variables not configured, using fallback data")
+    }
   } catch (error) {
     console.error("Failed to fetch featured workflow:", error)
+    // Continue with null data - components will use fallbacks
   }
 
   return (

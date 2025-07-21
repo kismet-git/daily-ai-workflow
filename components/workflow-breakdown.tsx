@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Lightbulb, TrendingUp, Target, CheckCircle } from "lucide-react"
-import Link from "next/link"
 import type { WorkflowData } from "@/lib/airtable"
 
 interface WorkflowBreakdownProps {
@@ -69,11 +68,9 @@ export function WorkflowBreakdown({ data }: WorkflowBreakdownProps) {
         </div>
 
         <div className="text-center">
-          <Link href="/workflow/ai-email-segmentation/breakdown">
-            <Button size="lg" variant="outline">
-              Read Full Breakdown
-            </Button>
-          </Link>
+          <Button size="lg" variant="outline">
+            Read Full Breakdown
+          </Button>
         </div>
       </div>
     </section>
