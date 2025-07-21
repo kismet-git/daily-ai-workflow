@@ -6,11 +6,12 @@ export const validateEnvironment = (): void => {
   const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key])
 
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
+    console.warn(`Missing environment variables: ${missing.join(", ")} - using fallback data`)
   }
 }
 
 export const sanitizeInput = (input: string): string => {
+  if (typeof input !== "string") return ""
   return input.replace(/[<>]/g, "").trim().slice(0, 1000)
 }
 

@@ -10,6 +10,11 @@ const openai = new OpenAI({
 
 const pickTopic = async (): Promise<string> => {
   try {
+    if (!base) {
+      console.warn("Airtable not configured, using fallback topic")
+      return "AI email segmentation"
+    }
+
     const records = await base("Backlog")
       .select({
         view: "Unused",
@@ -58,6 +63,10 @@ Guidelines:
 - Make it actionable within the stated timeframe`
 
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured")
+    }
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
@@ -99,11 +108,10 @@ export async function GET(request: NextRequest) {
 
     console.log("Starting daily workflow generation...")
 
-    const requiredEnvVars = ["OPENAI_API_KEY", "AIRTABLE_API_KEY", "AIRTABLE_BASE_ID"]
-    const missingVars = requiredEnvVars.filter((varName) => !process.env[varName])
-
-    if (missingVars.length > 0) {
-      throw new Error(`Missing environment variables: ${missingVars.join(", ")}`)
+    // Check if we have the minimum required environment variables
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("Missing OpenAI API key")
+      return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 })
     }
 
     const topic = await pickTopic()
@@ -120,23 +128,39 @@ export async function GET(request: NextRequest) {
       publishedAt: new Date().toISOString(),
     }
 
-    await createWorkflow(completeWorkflowData)
-    console.log("Workflow saved to Airtable")
+    // Only try to save to Airtable if it's configured
+    if (base) {
+      try {
+        await createWorkflow(completeWorkflowData)
+        console.log("Workflow saved to Airtable")
+      } catch (error) {
+        console.error("Failed to save to Airtable:", error)
+        // Continue without failing the entire request
+      }
+    } else {
+      console.warn("Airtable not configured, skipping database save")
+    }
 
+    // Try to revalidate cache if configured
     if (process.env.VERCEL_URL && process.env.REVALIDATE_SECRET) {
-      const revalidateUrl = `${process.env.VERCEL_URL}/api/revalidate?tag=${process.env.SITE_REVALIDATE_TAG || "home"}`
-      const revalidateResponse = await fetch(revalidateUrl, {
-        method: "POST",
-        headers: {
-          "x-vercel-revalidate-secret": process.env.REVALIDATE_SECRET,
-          "Content-Type": "application/json",
-        },
-      })
+      try {
+        const revalidateUrl = `${process.env.VERCEL_URL}/api/revalidate?tag=${process.env.SITE_REVALIDATE_TAG || "home"}`
+        const revalidateResponse = await fetch(revalidateUrl, {
+          method: "POST",
+          headers: {
+            "x-vercel-revalidate-secret": process.env.REVALIDATE_SECRET,
+            "Content-Type": "application/json",
+          },
+        })
 
-      if (revalidateResponse.ok) {
-        console.log("Homepage cache invalidated successfully")
-      } else {
-        console.error("Failed to invalidate cache:", await revalidateResponse.text())
+        if (revalidateResponse.ok) {
+          console.log("Homepage cache invalidated successfully")
+        } else {
+          console.error("Failed to invalidate cache:", await revalidateResponse.text())
+        }
+      } catch (error) {
+        console.error("Error revalidating cache:", error)
+        // Continue without failing
       }
     }
 

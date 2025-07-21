@@ -29,7 +29,7 @@ export const setCache = <T>(key: string, value: T, ttlMs = 60_000): void => {\
   store.set(key, { data: value, expiresAt: Date.now() + ttlMs });
 };
 
-/** Clear the entire cache. */
+/** Clear the entire cache */
 export const clearCache = (): void => {\
   store.clear();\
 };
