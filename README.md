@@ -28,3 +28,36 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+## Firecrawl Integration
+
+Only `FIRECRAWL_API_KEY` is required. The base URL defaults to `https://api.firecrawl.dev/v1` and can be optionally overridden with `FIRECRAWL_BASE_URL`.
+
+Set env vars:
+
+\`\`\`bash
+# local
+cp .env.example .env.local
+# then edit .env.local and add your Firecrawl API key
+\`\`\`
+
+\`\`\`bash
+# GET (quick test)
+curl "http://localhost:3000/api/firecrawl?url=https://example.com&mode=scrape"
+
+# Scrape a single URL (POST)
+curl -X POST http://localhost:3000/api/firecrawl \
+  -H "Content-Type: application/json" \
+  -d '{ "url": "https://example.com", "mode": "scrape", "options": {"formats":["markdown","json"]} }'
+
+# Crawl a site (POST)
+curl -X POST http://localhost:3000/api/firecrawl \
+  -H "Content-Type: application/json" \
+  -d '{ "url": "https://example.com", "mode": "crawl", "options": {"maxDepth": 1, "limit": 3} }'
+\`\`\`
+
+**After v0 applies changes**
+- Only `FIRECRAWL_API_KEY` is required in v0 → Environment Variables
+- Run: `npm run type-check && npm run build`
+- Visit `/tools/firecrawl` and test both **Scrape** and **Crawl**
+- Share file diffs and any build errors
