@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     google: process.env.GOOGLE_VERIFICATION_CODE,
   },
   category: "technology",
-    generator: 'v0.dev'
+    generator: 'v0.app'
 }
 
 export default function RootLayout({
