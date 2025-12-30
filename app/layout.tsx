@@ -1,16 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { validateEnvironment } from "@/lib/security"
 import "./globals.css"
-
-if (process.env.NODE_ENV === "production") {
-  try {
-    validateEnvironment()
-  } catch (error) {
-    console.error("Environment validation failed:", error)
-  }
-}
 
 export const metadata: Metadata = {
   title: "Daily AI Workflow – One AI-powered marketing workflow, delivered daily",

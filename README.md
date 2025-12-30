@@ -1,4 +1,4 @@
-# Daily ai workflow design
+# Daily AI Workflow Design
 
 *Automatically synced with your [v0.dev](https://v0.dev) deployments*
 
@@ -7,8 +7,78 @@
 
 ## Overview
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+This is a Daily AI Workflow discovery platform that showcases AI-powered marketing strategies. The app features a collection of curated workflows with detailed breakdowns, execution plans, and market insights.
+
+## Features
+
+- **Featured Workflows**: Curated AI marketing workflows with detailed metrics
+- **Workflow Library**: Browse and explore different AI workflows
+- **Workflow Breakdowns**: Detailed execution plans and market insights
+- **Firecrawl Integration**: Web scraping and crawling capabilities at `/tools/firecrawl`
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Firecrawl API key (required for the scraping tool)
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/kismetd/v0-daily-ai-workflow.git
+cd v0-daily-ai-workflow
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+# Edit .env.local and add your FIRECRAWL_API_KEY
+```
+
+4. Run the development server:
+```bash
+npm run dev
+```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## Environment Variables
+
+### Required
+- `FIRECRAWL_API_KEY` - Your Firecrawl API key for web scraping
+
+### Optional
+- `FIRECRAWL_BASE_URL` - Override Firecrawl base URL (defaults to `https://api.firecrawl.dev/v1`)
+- `OPENAI_API_KEY` - For future AI features
+- `VERCEL_URL` - Your Vercel deployment URL
+- `REVALIDATE_SECRET` - Secret for cache revalidation
+- `GOOGLE_VERIFICATION_CODE` - Google site verification
+- `NEXT_PUBLIC_GA_ID` - Google Analytics ID
+
+## Firecrawl Integration
+
+The Firecrawl tool is available at `/tools/firecrawl` and supports both scraping single URLs and crawling entire sites.
+
+### API Usage
+
+```bash
+# Scrape a single URL
+curl -X POST http://localhost:3000/api/firecrawl \
+  -H "Content-Type: application/json" \
+  -d '{ "url": "https://example.com", "mode": "scrape", "options": {"formats":["markdown","json"]} }'
+
+# Crawl a site
+curl -X POST http://localhost:3000/api/firecrawl \
+  -H "Content-Type: application/json" \
+  -d '{ "url": "https://example.com", "mode": "crawl", "options": {"maxDepth": 1, "limit": 3} }'
+```
 
 ## Deployment
 
@@ -16,11 +86,34 @@ Your project is live at:
 
 **[https://vercel.com/kismetd/v0-daily-ai-workflow](https://vercel.com/kismetd/v0-daily-ai-workflow)**
 
-## Build your app
-
 Continue building your app on:
 
 **[https://v0.dev/chat/projects/Gzoq92ebEE3](https://v0.dev/chat/projects/Gzoq92ebEE3)**
+
+## Tech Stack
+
+- **Framework**: Next.js 14.2.35
+- **Styling**: Tailwind CSS
+- **UI Components**: Radix UI + shadcn/ui
+- **Icons**: Lucide React
+- **Deployment**: Vercel
+
+## Project Structure
+
+```
+├── app/                  # Next.js app directory
+│   ├── api/             # API routes
+│   ├── tools/           # Tool pages (Firecrawl)
+│   └── page.tsx         # Homepage
+├── components/          # React components
+│   ├── ui/             # shadcn/ui components
+│   └── ...             # Custom components
+├── lib/                 # Utilities and data
+│   ├── types.ts        # TypeScript types
+│   ├── fallback-data.ts # Default workflow data
+│   └── ...             # Other utilities
+└── public/             # Static assets
+```
 
 ## How It Works
 
@@ -29,35 +122,6 @@ Continue building your app on:
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
 
-## Firecrawl Integration
+## License
 
-Only `FIRECRAWL_API_KEY` is required. The base URL defaults to `https://api.firecrawl.dev/v1` and can be optionally overridden with `FIRECRAWL_BASE_URL`.
-
-Set env vars:
-
-\`\`\`bash
-# local
-cp .env.example .env.local
-# then edit .env.local and add your Firecrawl API key
-\`\`\`
-
-\`\`\`bash
-# GET (quick test)
-curl "http://localhost:3000/api/firecrawl?url=https://example.com&mode=scrape"
-
-# Scrape a single URL (POST)
-curl -X POST http://localhost:3000/api/firecrawl \
-  -H "Content-Type: application/json" \
-  -d '{ "url": "https://example.com", "mode": "scrape", "options": {"formats":["markdown","json"]} }'
-
-# Crawl a site (POST)
-curl -X POST http://localhost:3000/api/firecrawl \
-  -H "Content-Type: application/json" \
-  -d '{ "url": "https://example.com", "mode": "crawl", "options": {"maxDepth": 1, "limit": 3} }'
-\`\`\`
-
-**After v0 applies changes**
-- Only `FIRECRAWL_API_KEY` is required in v0 → Environment Variables
-- Run: `npm run type-check && npm run build`
-- Visit `/tools/firecrawl` and test both **Scrape** and **Crawl**
-- Share file diffs and any build errors
+This project is private and proprietary.

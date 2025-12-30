@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { TrendingUp, Users, Clock, Target, Zap, DollarSign, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { WorkflowData } from "@/lib/airtable"
+import type { WorkflowData } from "@/lib/types"
 
 interface FeaturedWorkflowProps {
   data?: WorkflowData | null

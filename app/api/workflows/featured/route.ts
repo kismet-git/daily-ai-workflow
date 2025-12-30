@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
-import { fetchFeatured } from "@/lib/airtable"
+import { getFeaturedWorkflow } from "@/lib/fallback-data"
 
 export const revalidate = 30
 export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
-    const data = await fetchFeatured()
+    const data = getFeaturedWorkflow()
 
     if (!data) {
       return NextResponse.json({ error: "No featured workflow found" }, { status: 404 })

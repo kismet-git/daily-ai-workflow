@@ -31,5 +31,5 @@ export const setCache = <T>(key: string, value: T, ttlMs = 60_000): void => {\
 
 /** Clear the entire cache */
 export const clearCache = (): void => {\
-  store.clear();
-};\
+  store.clear();\
+};

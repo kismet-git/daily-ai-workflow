@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Lightbulb, TrendingUp, Target, CheckCircle } from "lucide-react"
-import type { WorkflowData } from "@/lib/airtable"
+import type { WorkflowData } from "@/lib/types"
 
 interface WorkflowBreakdownProps {
   data?: WorkflowData | null

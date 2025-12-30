@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles } from "lucide-react"
-import type { WorkflowData } from "@/lib/airtable"
+import type { WorkflowData } from "@/lib/types"
 
 interface HeroSectionProps {
   data?: WorkflowData | null

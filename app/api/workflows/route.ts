@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
-import { fetchAllWorkflows } from "@/lib/airtable"
+import { getAllWorkflows } from "@/lib/fallback-data"
 
 export const revalidate = 300
 export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
-    const workflows = await fetchAllWorkflows()
+    const workflows = getAllWorkflows()
 
     return NextResponse.json(workflows, {
       headers: {
